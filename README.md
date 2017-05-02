@@ -1,5 +1,5 @@
 ![Bit Boss Battles](https://www.bitbossbattles.io/images/logo.png)
-# v1.3.0.2: Release
+# v1.3.0.3: Release
 
 This software is provided "as-is" with no warranties.
 
@@ -33,6 +33,9 @@ Bit Boss Battles requires authorization in order to listen for bits notification
 ***
 
 ## 1.3:
+
+#### v1.3.0.3:
+- Fixed "My Bit Boss has been reset" script to use numbers and not strings.
 
 #### v1.3.0.2:
 - Added a second analytics metric for usage tracking.

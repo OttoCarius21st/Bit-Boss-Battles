@@ -18,19 +18,21 @@ $(document).ready(function() {
 	
 	$("#hp-max").change(function() {
 		
-		max = $(this).val();
+		max = parseInt($(this).val());
 		UpdateLink();
 	});
 	
 	$("#hp-cur").change(function() {
 		
-		cur = $(this).val();
+		cur = parseInt($(this).val());
 		UpdateLink();
 	});
 	
 	function UpdateLink() {
 		
 		if (boss == "") { $("#link").html('<span style="color: red;">Boss not set. Enter an exact username to set the boss.</span>'); }
+		else if (isNaN(max)) { $("#link").html('<span style="color: red;">Max Health is not a number! Set a number.</span>'); }
+		else if (isNaN(cur)) { $("#link").html('<span style="color: red;">Current Health is not a number! Set a number.</span>'); }
 		else if (max == 0 || cur == 0) { $("#link").html('<span style="color: red;">Can\'t have zero health! Set a non-zero health.</span>'); }
 		else if (max < cur) { $("#link").html('<span style="color: red;">Can\'t have less max health than current health.</span>'); }
 		else { $("#link").html("http://www.bitbossbattles.io/setboss.html?boss=" + boss.toLowerCase() + "&max=" + max.toString() + "&cur=" + cur.toString()); }
