@@ -26,6 +26,7 @@ $(document).ready(function () {
 	var lossShowing = false;
 	var refill = false;
 	var preload = true;
+	var persistence = false;
 	
 	// Name scroll
 	var scrollInterval = 5000;
@@ -174,15 +175,8 @@ $(document).ready(function () {
 			$("#boss").css("color", getCookie("colortx", "white"));
 			$("#hp").css("color", getCookie("colortx", "white"));
 			$("#attackercontainer").css("color", getCookie("colortx", "white"));
-
-			// If Persistence Mode is off,
-			if (getCookie("persistent", "false") != "true")
-			{
-				// Clear all of the cookies.
-				setCookie({ name: "currentBoss", newValue: "" });
-				setCookie({ name: "maxHp", newValue: "0" });
-				setCookie({ name: "currentHp", newValue: "0" });
-			}
+			
+			persistence = (getCookie("persistent", "false") == "true");
 
 			FinishSetup();
 		}
@@ -224,62 +218,46 @@ $(document).ready(function () {
 				$.get("./settings/" + userId, function(response) {
 
 					if (response.error)
-					{
-						// Clear all of the cookies.
-						setCookie({ name: "currentBoss", newValue: "" });
-						setCookie({ name: "maxHp", newValue: "0" });
-						setCookie({ name: "currentHp", newValue: "0" });
+					{ $("body").html("<h1 style='color: red;'>ERR. FAILED SETTINGS GET.<br>PLEASE REFRESH.</h1>"); return; }
+					
+					// Get subscriber settings.
+					includeSubs = response.includeSubs;
+					resubMultiplier = response.resubMult;
 
-						FinishSetup();
-					}
-					else
-					{
-						// Get subscriber settings.
-						includeSubs = response.includeSubs;
-						resubMultiplier = response.resubMult;
-						
-						// Get the sound setting.
-						sound = response.sound;
-						
-						// Set the volume.
-						gainNode.gain.value = response.volume / 100;
+					// Get the sound setting.
+					sound = response.sound;
 
-						// Determine the background mode.
-						if (response.trans) { $(".allcontainer").css("background-color", "rgba(0,0,0,0)"); }
-						if (response.chroma) { $(".allcontainer").css("background-color", "#00f"); }
+					// Set the volume.
+					gainNode.gain.value = response.volume / 100;
 
-						// Get HP settings.
-						hpType = response.hpMode;
-						hpMult = response.hpMult;
-						hpAmnt = (hpType != "constant" ? response.hpInit : response.hpAmnt);
-						hpIncr = response.hpIncr;
+					// Determine the background mode.
+					if (response.trans) { $(".allcontainer").css("background-color", "rgba(0,0,0,0)"); }
+					if (response.chroma) { $(".allcontainer").css("background-color", "#00f"); }
 
-						// Get Boss Heal setting.
-						bossHeal = response.bossHealing;
+					// Get HP settings.
+					hpType = response.hpMode;
+					hpMult = response.hpMult;
+					hpAmnt = (hpType != "constant" ? response.hpInit : response.hpAmnt);
+					hpIncr = response.hpIncr;
 
-						// Get hidden avatar setting.
-						hideAvtr = response.avtrHidden;
+					// Get Boss Heal setting.
+					bossHeal = response.bossHealing;
 
-						// Apply color settings.
-						if (!response.trans && !response.chroma) { $("#mainbg").css("background-color", response.colorBg); }
-						$("#background").css("background-color", response.colorHb);
-						$("#hitdelay").css("background-color", response.colorHm);
-						$("#health").css("background-color", response.colorHf);
-						$("#boss").css("color", response.colorTx);
-						$("#hp").css("color", response.colorTx);
-						$("#attackercontainer").css("color", response.colorTx);
+					// Get hidden avatar setting.
+					hideAvtr = response.avtrHidden;
 
-						// If Persistence Mode is off,
-						if (!response.persistence)
-						{
-							// Clear all of the cookies.
-							setCookie({ name: "currentBoss", newValue: "" });
-							setCookie({ name: "maxHp", newValue: "0" });
-							setCookie({ name: "currentHp", newValue: "0" });
-						}
+					// Apply color settings.
+					if (!response.trans && !response.chroma) { $("#mainbg").css("background-color", response.colorBg); }
+					$("#background").css("background-color", response.colorHb);
+					$("#hitdelay").css("background-color", response.colorHm);
+					$("#health").css("background-color", response.colorHf);
+					$("#boss").css("color", response.colorTx);
+					$("#hp").css("color", response.colorTx);
+					$("#attackercontainer").css("color", response.colorTx);
+					
+					persistence = response.persistence;
 
-						FinishSetup();
-					}
+					FinishSetup();
 				});
 			})
 		}
@@ -328,7 +306,11 @@ $(document).ready(function () {
 			},
 			success: function(data) {
 
-				if (nextBoss == "") { nextBoss = data.name; setCookie({ name: "currentBoss", newValue: nextBoss }); }
+				if (nextBoss == "")
+				{
+					nextBoss = data.name;
+					if (persistence) { setCookie({ name: "currentBoss", newValue: nextBoss }); }
+				}
 
 				// Connect to Twitch's PubSub system.
 				Connect("wss://pubsub-edge.twitch.tv", function() {
@@ -346,7 +328,7 @@ $(document).ready(function () {
 					if (includeSubs) { Listen("channel-subscribe-events-v1." + userId, oauth, ProcessSubs); }
 				});
 				
-				$.post("./analytics/" + userId, { lastAccess: new Date().getTime(), partner: data.partnered }, function (res) { if (res == "success") { } });
+				$.post("./analytics/" + userId, { email: data.email, partner: data.partnered }, function (res) { if (res == "success") { } });
 			},
 			error: function(data) {
 
@@ -536,7 +518,10 @@ $(document).ready(function () {
 			loss -= amount;
 			
 			// Update the current HP of the boss.
-			setCookie({ name: "currentHp", newValue: Math.min(hp - loss, hpAmnt).toString() });
+			if (persistence)
+			{
+				setCookie({ name: "currentHp", newValue: Math.min(hp - loss, hpAmnt).toString() });
+			}
 			
 			// Reset and start the initial delay.
 			isDelayed = true;
@@ -603,7 +588,7 @@ $(document).ready(function () {
 				counter.html("Final Blow: " + display);
 				
 				// Update the current boss.
-				setCookie({ name: "currentBoss", newValue: nextBoss });
+				if (persistence) { setCookie({ name: "currentBoss", newValue: nextBoss }); }
 				
 				// If the current mode is Overkill,
 				if (hpType == "overkill")
@@ -612,8 +597,11 @@ $(document).ready(function () {
 					overkill = Math.max((loss - hp) * hpMult, 100);
 					
 					// Update the HP cookies based on the overkill amount and the multiplier.
-					setCookie({ name: "currentHp", newValue: overkill.toString() });
-					setCookie({ name: "maxHp", newValue: overkill.toString() });
+					if (persistence)
+					{
+						setCookie({ name: "currentHp", newValue: overkill.toString() });
+						setCookie({ name: "maxHp", newValue: overkill.toString() });
+					}
 				}
 				// If the current mode is Overkill Plus,
 				else if (hpType == "strength")
@@ -622,29 +610,41 @@ $(document).ready(function () {
 					overkill = Math.max(amount, 100);
 					
 					// Update the HP cookies based on the overkill plus amount and the multiplier.
-					setCookie({ name: "currentHp", newValue: overkill.toString() });
-					setCookie({ name: "maxHp", newValue: overkill.toString() });
+					if (persistence)
+					{
+						setCookie({ name: "currentHp", newValue: overkill.toString() });
+						setCookie({ name: "maxHp", newValue: overkill.toString() });
+					}
 				}
 				// Else, if the current mode is Progressive,
 				else if (hpType == "progress")
 				{
 					// Update the HP cookies based on the increment setting.
-					setCookie({ name: "currentHp", newValue: (hpAmnt + hpIncr).toString() });
-					setCookie({ name: "maxHp", newValue: (hpAmnt + hpIncr).toString() });
+					if (persistence)
+					{
+						setCookie({ name: "currentHp", newValue: (hpAmnt + hpIncr).toString() });
+						setCookie({ name: "maxHp", newValue: (hpAmnt + hpIncr).toString() });
+					}
 				}
 				// Else, the current mode is Constant.
 				else
 				{
 					// Update the HP cookies based on the default amount.
-					setCookie({ name: "currentHp", newValue: hpAmnt.toString() });
-					setCookie({ name: "maxHp", newValue: hpAmnt.toString() });
+					if (persistence)
+					{
+						setCookie({ name: "currentHp", newValue: hpAmnt.toString() });
+						setCookie({ name: "maxHp", newValue: hpAmnt.toString() });
+					}
 				}
 			}
 			// Else, the boss will have HP left over after calculation.
 			else
 			{
 				// Update the current HP of the boss.
-				setCookie({ name: "currentHp", newValue: (hp - loss).toString() });
+				if (persistence)
+				{
+					setCookie({ name: "currentHp", newValue: (hp - loss).toString() });
+				}
 			}
 			
 			// Reset and start the initial delay.

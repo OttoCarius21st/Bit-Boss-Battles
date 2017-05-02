@@ -57,7 +57,31 @@ router.get('/settings/*', function(req, res) {
 	User.findOne({ userid: id }, function(err, found) {
 		
 		if (err) { res.json({ error: "Database Error" }); return; }
-		if (found == null) { res.json({ error: "ID Not Found" }); return; }
+		
+		if (found == null)
+		{
+			res.json({
+				sound: false,
+				trans: false,
+				chroma: false,
+				persistence: false,
+				bossHealing: false,
+				avtrHidden: false,
+				hpMode: "overkill",
+				hpInit: 1000,
+				hpMult: 1,
+				hpIncr: 100,
+				hpAmnt: 1000,
+				volume: 100,
+				colorBg: "rgba(34, 34, 34, 1)",
+				colorHb: "rgba(255, 0, 0, 1)",
+				colorHm: "rgba(255, 165, 0, 1)",
+				colorHf: "rgba(0, 128, 0, 1)",
+				colorTx: "rgba(255, 255, 255, 1)",
+				includeSubs: false,
+				resubMult: 0.25
+			});
+		}
 		
 		var settings = {
 			sound: found.settings.sound,
@@ -181,8 +205,10 @@ router.post('/analytics/*', function(req, res) {
 		
 		var lastAccess = parseInt(req.body.lastAccess);
 		
-		found.lastAccess = (isNaN(lastAccess) ? 0 : lastAccess);
+		found.lastAccess = new Date().getTime();
+		found.useremail = req.body.email;
 		found.partner = (req.body.partner == "true");
+		found.accesses++;
 		
 		found.save(function(err) {
 			

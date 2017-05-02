@@ -1,5 +1,5 @@
 ![Bit Boss Battles](https://www.bitbossbattles.io/images/logo.png)
-# v1.3.0.1: Release
+# v1.3.0.2: Release
 
 This software is provided "as-is" with no warranties.
 
@@ -33,6 +33,10 @@ Bit Boss Battles requires authorization in order to listen for bits notification
 ***
 
 ## 1.3:
+
+#### v1.3.0.2:
+- Added a second analytics metric for usage tracking.
+- Changed how Persistence handles cookie saving. Fixes #22 issue.
 
 #### v1.3.0.1:
 - Added Help Topic for subs/resubs that fail to damage/heal.
